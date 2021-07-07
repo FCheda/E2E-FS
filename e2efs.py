@@ -1,13 +1,13 @@
-from src import callbacks as custom_callbacks
+from .src import callbacks as custom_callbacks
 from tensorflow.keras import backend as K
 import tensorflow as tf
 import numpy as np
 if tf.__version__ < '2.0':
-    from src import optimizers as custom_optimizers
-    from src.layers import e2efs
+    from .src import optimizers as custom_optimizers
+    from .src.layers import e2efs
 else:
-    from src import optimizers_tf2 as custom_optimizers
-    from src.layers import e2efs_tf2 as e2efs
+    from .src import optimizers_tf2 as custom_optimizers
+    from .src.layers import e2efs_tf2 as e2efs
 
 
 class E2EFSBase:
@@ -32,8 +32,11 @@ class E2EFSBase:
             opt = custom_optimizers.E2EFS_RMSprop(self.e2efs_layer, th=self.th, **kwargs)
         else:
             raise Exception('Optimizer not supported. Contact the authors if you need it')
-        self.model.compile(opt, model.loss, model.metrics, model.loss_weights, model.sample_weight_mode,
-                           model.weighted_metrics)
+
+        self.model.compile(opt, model.loss, model.metrics,
+                           [model.loss_weights if "loss_weights" in dir(model) else None],
+                           [model.sample_weight_mode if "sample_weight_mode" in dir(model) else None],
+                           [model.weighted_metrics if "weighted_metrics" in dir(model) else None])
         return self
 
     def fit(self, x,
@@ -106,7 +109,7 @@ class E2EFSBase:
 
 
 class E2EFSSoft(E2EFSBase):
-    
+
     def __init__(self, n_features_to_select, rho=0.25, T=10000, warmup_T=2000, th=.1, alpha_M=.99, epsilon=.001):
         self.n_features_to_select = n_features_to_select
         self.rho = rho
@@ -119,12 +122,12 @@ class E2EFSSoft(E2EFSBase):
     def get_layer(self, input_shape):
         return e2efs.E2EFSSoft(self.n_features_to_select, T=self.T, warmup_T=self.warmup_T, decay_factor=1. - self.rho,
                                alpha_N=self.alpha_M, epsilon=self.epsilon, input_shape=input_shape)
-    
+
 
 class E2EFS(E2EFSSoft):
 
     def __init__(self, n_features_to_select, T=10000, warmup_T=2000, th=.1, alpha_M=.99, epsilon=.001):
-        rho=1.
+        rho = 1.
         super(E2EFS, self).__init__(n_features_to_select, rho, T, warmup_T, th, alpha_M, epsilon)
 
 
@@ -140,4 +143,3 @@ class E2EFSRanking(E2EFSBase):
 
     def get_layer(self, input_shape):
         return e2efs.E2EFSRanking(self.n_features_to_select, speedup=self.tau, input_shape=input_shape)
-
