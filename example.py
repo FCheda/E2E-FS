@@ -1,14 +1,23 @@
 from tensorflow.keras.datasets import mnist
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.utils import to_categorical
-import e2efs
-from src.wrn.network_models import wrn164
+import os
+import sys
+from pyprojroot import here
+
+if not (str(here()) in sys.path):  # noqa
+    sys.path.insert(0, str(here()))
+
+import E2E_FS
+from E2E_FS import dataset_reader, e2efs
+from E2E_FS.src.wrn.network_models import wrn164
 import numpy as np
 
 
 if __name__ == '__main__':
 
     # LOAD DATA
+    from tensorflow.keras.datasets import mnist
     (x_train, y_train), (x_test, y_test) = mnist.load_data()
     x_train = np.expand_dims(x_train, axis=-1)
     x_test = np.expand_dims(x_test, axis=-1)
@@ -17,7 +26,7 @@ if __name__ == '__main__':
 
     # LOAD MODEL AND COMPILE IT (NEVER FORGET TO COMPILE!)
     model = wrn164(input_shape=x_train.shape[1:], nclasses=10, regularization=5e-4)
-    model.compile(optimizer='sgd', lr=1e-1, metrics=['acc'], loss='categorical_crossentropy')
+    model.compile(optimizer='sgd', metrics=['acc'], loss='categorical_crossentropy')
 
     # LOAD E2EFS AND RUN IT
     fs_class = e2efs.E2EFSSoft(n_features_to_select=39).attach(model)

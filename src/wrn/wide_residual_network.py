@@ -1,5 +1,5 @@
 from tensorflow.keras.layers import Add, Activation, Dropout
-from tensorflow.keras.layers import Convolution2D
+from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras import backend as K
 from tensorflow.keras.regularizers import l2
@@ -21,13 +21,13 @@ def residual_block(ip, output_channels, strides=(1, 1), dropout=0.0, regularizat
         if bn:
             x = BatchNormalization(axis=channel_axis, momentum=0.9, epsilon=1e-5, gamma_initializer='ones')(x)
         x = Activation('relu')(x)
-        init = Convolution2D(
+        init = Conv2D(
             output_channels, (1, 1), padding='same', strides=strides, kernel_initializer=kernel_initializer,
             use_bias=False, kernel_regularizer=l2(regularization) if regularization > 0.0 else None
         )(x)
 
-    x = Convolution2D(output_channels, (3, 3), padding='same', strides=strides, kernel_initializer=kernel_initializer,
-                      use_bias=False, kernel_regularizer=l2(regularization) if regularization > 0.0 else None)(x)
+    x = Conv2D(output_channels, (3, 3), padding='same', strides=strides, kernel_initializer=kernel_initializer,
+               use_bias=False, kernel_regularizer=l2(regularization) if regularization > 0.0 else None)(x)
 
     x = BatchNormalization(axis=channel_axis, momentum=0.9, epsilon=1e-5, gamma_initializer='ones')(x)
     x = Activation('relu')(x)
@@ -35,8 +35,8 @@ def residual_block(ip, output_channels, strides=(1, 1), dropout=0.0, regularizat
     if dropout > 0.0:
         x = Dropout(dropout)(x)
 
-    x = Convolution2D(output_channels, (3, 3), padding='same', kernel_initializer=kernel_initializer,
-                      use_bias=False, kernel_regularizer=l2(regularization) if regularization > 0.0 else None)(x)
+    x = Conv2D(output_channels, (3, 3), padding='same', kernel_initializer=kernel_initializer,
+               use_bias=False, kernel_regularizer=l2(regularization) if regularization > 0.0 else None)(x)
 
     m = Add()([init, x])
 
@@ -47,7 +47,7 @@ def wrn_block(ip, output_channels, N, strides=(1, 1), dropout=0.0, regularizatio
     m = residual_block(
         ip, output_channels, strides, dropout, regularization=regularization, kernel_initializer=kernel_initializer, bn=bn
     )
-    for i in range(N-1):
+    for i in range(N - 1):
         m = residual_block(
             m, output_channels, dropout=dropout, regularization=regularization, kernel_initializer=kernel_initializer, bn=bn
         )
@@ -60,7 +60,7 @@ def create_cifar_wide_residual_network(
     channel_axis = 1 if K.image_data_format() == "channels_first" else -1
     # ip = Input(shape=input_dim)
 
-    x = Convolution2D(
+    x = Conv2D(
         16, (3, 3), padding='same', kernel_initializer=kernel_initializer,
         use_bias=False, kernel_regularizer=l2(regularization) if regularization > 0.0 else None
     )(ip)
@@ -88,7 +88,7 @@ def create_stl_wide_residual_network(
     channel_axis = 1 if K.image_data_format() == "channels_first" else -1
     # ip = Input(shape=input_dim)
 
-    x = Convolution2D(
+    x = Conv2D(
         16, (3, 3), strides=(3, 3), padding='same', kernel_initializer=kernel_initializer,
         use_bias=False, kernel_regularizer=l2(regularization) if regularization > 0.0 else None
     )(ip)

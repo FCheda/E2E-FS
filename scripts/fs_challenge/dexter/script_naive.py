@@ -1,5 +1,5 @@
-from keras.utils import to_categorical
-from keras import callbacks, regularizers
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras import callbacks, regularizers
 import json
 import numpy as np
 import os
@@ -136,7 +136,7 @@ def main(dataset_name):
     print(name)
 
     for j, (train_index, test_index) in enumerate(rskf.split(raw_data, raw_label)):
-        print('k_fold', j, 'of', k_folds*k_fold_reps)
+        print('k_fold', j, 'of', k_folds * k_fold_reps)
 
         train_data, train_labels = raw_data[train_index], raw_label[train_index]
         test_data, test_labels = raw_data[test_index], raw_label[test_index]

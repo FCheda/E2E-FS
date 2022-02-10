@@ -74,6 +74,8 @@ class Normalize:
 
     def transform(self, X):
         transformed_X = erf((X - self.stats[0]) / (np.maximum(1e-6, self.stats[1]) * np.sqrt(2.)))
+        #transformed_X = erf((X) / (np.maximum(1e-6, self.stats[1]) * np.sqrt(2.)))
+
         return transformed_X
 
     def fit_transform(self, X):

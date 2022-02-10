@@ -1,13 +1,25 @@
+import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras import backend as K, optimizers, layers, models
 from tensorflow.keras.layers import Dense, Activation, BatchNormalization, Input, Convolution2D, GlobalAveragePooling2D, Flatten
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.applications import EfficientNetB0, DenseNet121, MobileNetV2
-from src.wrn.wide_residual_network import wrn_block
-from src.network_models import three_layer_nn as tln
+from .wide_residual_network import wrn_block
+from ..network_models import three_layer_nn as tln
 import numpy as np
 import tempfile
 import os
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+
+    except RuntimeError as e:
+        print(e)
+
+print(gpus)
 
 
 def three_layer_nn(input_shape, nclasses=2, bn=True, kernel_initializer='he_normal',
@@ -28,10 +40,9 @@ def three_layer_nn(input_shape, nclasses=2, bn=True, kernel_initializer='he_norm
     return model
 
 
-
 def wrn164(
     input_shape, nclasses=2, bn=True, kernel_initializer='he_normal', dropout=0.0, regularization=0.0,
-    softmax=True
+    softmax=True, learning_rate=1e-1
 ):
     channel_axis = 1 if K.image_data_format() == "channels_first" else -1
     ip = Input(shape=input_shape)
@@ -71,7 +82,7 @@ def wrn164(
 
     model = Model(ip, output)
 
-    optimizer = optimizers.SGD(lr=1e-1)
+    optimizer = optimizers.SGD(learning_rate=learning_rate)
     model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['acc'])
 
     return model
@@ -188,7 +199,7 @@ def efficientnetB0(
     inputs = keras_model.input
     if input_shape[-1] == 1:
         inputs = layers.Input(shape=input_shape)
-        x = layers.ZeroPadding2D(padding=(2,2))(inputs)
+        x = layers.ZeroPadding2D(padding=(2, 2))(inputs)
         output_shape = K.int_shape(x)
         output_shape = output_shape[:-1] + (3,)
         x = layers.Lambda(lambda x: K.tile(x, (1, 1, 1, 3)), output_shape=output_shape)(x)
@@ -210,4 +221,3 @@ def efficientnetB0(
                   metrics=['acc'])
 
     return model
-
